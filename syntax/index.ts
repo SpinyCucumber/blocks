@@ -15,7 +15,7 @@ export function getOpposite(side: Side): Side {
     return (side + 2) % 4;
 }
 
-export type Expr = Expr.Mapping | Expr.Composition | Expr.Variable;
+export type Expr = Expr.Mapping | Expr.Composition;
 
 export namespace Expr {
 
@@ -23,22 +23,63 @@ export namespace Expr {
      * Maps any number of sides to an expression.
      * Can be thought of as an environment, or bindings.
      */
-    export type Mapping = Map<Side, Expr>;
+    export class Mapping {
+
+        private readonly map: Map<Side, Expr>;
+
+        constructor(entries: Iterable<[Side, Expr]>) {
+            this.map = Map(entries);
+        }
+
+        get(side: Side) {
+            return this.map.get(side);
+        }
+
+        has(side: Side) {
+            return this.map.has(side);
+        }
+
+        [Symbol.iterator]() {
+            return this.map[Symbol.iterator];
+        }
+
+    }
 
     /**
      * Composes two mappings into a single mapping.
      * This is accomplished by substituting each map of the first mapping into the second mapping.
      */
-    export interface Composition {
-        first: Expr;
-        second: Expr;
+    export class Composition {
+
+        readonly first: Expr;
+        readonly second: Expr;
+
+        constructor(first: Expr, second: Expr) {
+            this.first = first;
+            this.second = second;
+        }
+
     }
 
     /**
      * A reference to a side.
+     * This type is an enumerated type, with four instances.
+     * To retrieve an instance, use Variable.forSide
      */
-    export interface Variable {
-        side: Side;
+    export class Variable {
+
+        readonly side: Side;
+
+        private constructor(side: Side) {
+            this.side = side;
+        }
+
+        private static variables = directions.map((_, side) => new Variable(side));
+
+        static forSide(side: Side) {
+            return this.variables.get(side);
+        }
+
     }
 
 }
