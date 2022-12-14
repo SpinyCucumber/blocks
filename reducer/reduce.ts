@@ -1,13 +1,13 @@
-import { Expr } from "../syntax";
+import { Composition, Expr, Mapping, Variable } from "../syntax";
 import { singleDispatch } from "../utility";
 
 /**
  * Variables and Mappings cannot be reduced.
  */
 export const reduce = singleDispatch<Expr, Expr>([
-    [Expr.Variable, expr => expr],
-    [Expr.Mapping, expr => expr],
-    [Expr.Composition, (expr: Expr.Composition) => {
+    [Variable, expr => expr],
+    [Mapping, expr => expr],
+    [Composition, (expr: Composition) => {
         const first = reduce(expr.first);
         const second = reduce(expr.second);
         // TODO Reduce
@@ -15,13 +15,13 @@ export const reduce = singleDispatch<Expr, Expr>([
     }],
 ]);
 
-export const substitute = singleDispatch<Expr, (mapping: Expr.Mapping) => Expr>([
-    [Expr.Composition, ({first, second}: Expr.Composition) => (mapping => 
-        new Expr.Composition(substitute(first)(mapping), substitute(second)(mapping))
+export const substitute: (expr: Expr) => (mapping: Mapping) => Expr = singleDispatch<Expr, (mapping: Mapping) => Expr>([
+    [Composition, ({first, second}: Composition) => (mapping => 
+        new Composition(substitute(first)(mapping), substitute(second)(mapping))
     )],
-    [Expr.Mapping, (expr: Expr.Mapping) => (mapping => expr.map(value => substitute(value)(mapping)))],
+    [Mapping, (expr: Mapping) => (mapping => expr.map(value => substitute(value)(mapping)))],
     // If variable's side is defined by the mapping, substitute
-    [Expr.Variable, (expr: Expr.Variable) => (mapping => {
+    [Variable, (expr: Variable) => (mapping => {
         const { side } = expr;
         if (mapping.has(side)) return mapping.get(side);
         return expr;
