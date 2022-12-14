@@ -1,5 +1,4 @@
-import { directions } from "../utility";
-import { Map } from "immutable";
+import { Map, Seq } from "immutable";
 import { Side } from "./side";
 
 export type Expr = Mapping | Composition | Variable;
@@ -12,12 +11,8 @@ export class Mapping {
 
     private readonly internal: Map<Side, Expr>;
 
-    constructor(internal: Map<Side, Expr>) {
-        this.internal = internal;
-    }
-
-    static of(entries: Iterable<[Side, Expr]>) {
-        return new Mapping(Map(entries));
+    constructor(entries: Iterable<[Side, Expr]>) {
+        this.internal = Map(entries);
     }
 
     get(side: Side) {
@@ -29,7 +24,7 @@ export class Mapping {
     }
 
     map(mapper: (value: Expr) => Expr) {
-        return new Mapping(this.internal.map(mapper));
+        return new Mapping(Seq(this.internal).map(mapper));
     }
 
 }
@@ -48,29 +43,19 @@ export class Composition {
         this.second = second;
     }
 
-    static of(first: Expr, second: Expr) {
-        return new Composition(first, second);
-    }
-
 }
 
 /**
  * A reference to a side.
- * This type is an enumerated type, with four instances.
- * To retrieve an instance, use Variable.forSide
  */
 export class Variable {
 
     readonly side: Side;
+    readonly depth: number;
 
-    constructor(side: Side) {
+    constructor(side: Side, depth: number) {
         this.side = side;
-    }
-
-    private static variables = directions.map((_, side) => new Variable(side));
-
-    static forSide(side: Side) {
-        return this.variables.get(side);
+        this.depth = depth;
     }
 
 }

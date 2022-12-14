@@ -2,34 +2,36 @@ import { Composition, Expr, Mapping, Variable } from "../syntax";
 import { singleDispatch } from "../utility";
 
 /**
- * Variables and Mappings cannot be reduced.
+ * Variables cannot be reduced.
  */
 export const reduce = singleDispatch<Expr, Expr>([
     [Variable, expr => expr],
-    [Mapping, expr => expr],
+    [Mapping, (expr: Mapping) => expr.map(value => reduce(value))],
     [Composition, (expr: Composition) => {
         const first = reduce(expr.first);
-        if (first instanceof Mapping) {
-            const second = reduce(expr.second);
-            return substitute(second)(first);
+        const second = reduce(expr.second);
+        if (first instanceof Mapping && second instanceof Mapping) {
+            return second.map(value => evaluate(value, first));
         }
         return expr;
     }],
 ]);
 
-export const substitute: (expr: Expr) => (mapping: Mapping) => Expr = singleDispatch<Expr, (mapping: Mapping) => Expr>([
-    [Composition, ({first, second}: Composition) => (mapping => 
-        new Composition(substitute(first)(mapping), substitute(second)(mapping))
-    )],
-    [Mapping, (expr: Mapping) => (mapping => expr.map(value => substitute(value)(mapping)))],
+export const substitute = singleDispatch<Expr, (mapping: Mapping, depth: number) => Expr>([
     // If variable's side is defined by the mapping, substitute
-    [Variable, (expr: Variable) => (mapping => {
-        const { side } = expr;
-        if (mapping.has(side)) return mapping.get(side);
+    [Variable, (expr: Variable) => ((mapping, depth) => {
+        if (expr.depth === depth) {
+            const { side } = expr;
+            if (mapping.has(side)) return mapping.get(side);
+        }
         return expr;
     })],
+    [Mapping, (expr: Mapping) => ((mapping, depth) => expr.map(value => substitute(value)(mapping, depth + 1)))],
+    [Composition, ({first, second}: Composition) => ((mapping, depth) => 
+        new Composition(substitute(first)(mapping, depth), substitute(second)(mapping, depth))
+    )],
 ]);
 
 export function evaluate(expr: Expr, mapping: Mapping) {
-    return reduce(substitute(expr)(mapping));
+    return reduce(substitute(expr)(mapping, 1));
 }
