@@ -5,7 +5,7 @@ module.exports = {
     entry: './src/index.ts',
     plugins: [
         new HtmlWebpackPlugin({
-            title: 'TypeScript Webpack Template',
+            title: 'Blocks',
             template: './src/index.html',
         }),
     ],

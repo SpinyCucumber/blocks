@@ -1,7 +1,7 @@
 {
-  "name": "typescript-webpack-template",
+  "name": "blocks",
   "version": "1.0.0",
-  "description": "This is a template for a full-screen canvas app built using TypeScript and Webpack.",
+  "description": "A Minimalist Graphical Programming Language.",
   "private": true,
   "scripts": {
     "build": "webpack --mode=production",
@@ -10,15 +10,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SpinyCucumber/typescript-webpack-template.git"
+    "url": "git+https://github.com/SpinyCucumber/blocks.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/SpinyCucumber/typescript-webpack-template/issues"
+    "url": "https://github.com/SpinyCucumber/blocks/issues"
   },
-  "homepage": "https://github.com/SpinyCucumber/typescript-webpack-template#readme",
+  "homepage": "https://github.com/SpinyCucumber/blocks#readme",
   "devDependencies": {
     "@types/jest": "^29.2.3",
     "@types/js-priority-queue": "0.0.6",
