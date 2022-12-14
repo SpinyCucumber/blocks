@@ -10,7 +10,7 @@ export type Expr = Mapping | Composition | Variable;
  */
 export class Mapping {
 
-    private readonly internal: Map<Side, Expr>;
+    readonly internal: Map<Side, Expr>;
 
     constructor(internal: Map<Side, Expr>) {
         this.internal = internal;
@@ -30,10 +30,6 @@ export class Mapping {
 
     map(mapper: (value: Expr) => Expr) {
         return new Mapping(this.internal.map(mapper));
-    }
-
-    [Symbol.iterator]() {
-        return this.internal[Symbol.iterator];
     }
 
 }
