@@ -15,7 +15,7 @@ export function getOpposite(side: Side): Side {
     return (side + 2) % 4;
 }
 
-export type Expr = Expr.Mapping | Expr.Composition;
+export type Expr = Expr.Mapping | Expr.Composition | Expr.Variable;
 
 export namespace Expr {
 
@@ -25,22 +25,26 @@ export namespace Expr {
      */
     export class Mapping {
 
-        private readonly map: Map<Side, Expr>;
+        private readonly internal: Map<Side, Expr>;
 
         constructor(entries: Iterable<[Side, Expr]>) {
-            this.map = Map(entries);
+            this.internal = Map(entries);
         }
 
         get(side: Side) {
-            return this.map.get(side);
+            return this.internal.get(side);
         }
 
         has(side: Side) {
-            return this.map.has(side);
+            return this.internal.has(side);
+        }
+
+        map(mapper: (value: Expr) => Expr) {
+            return new Mapping(this.internal.map(mapper));
         }
 
         [Symbol.iterator]() {
-            return this.map[Symbol.iterator];
+            return this.internal[Symbol.iterator];
         }
 
     }
@@ -70,7 +74,7 @@ export namespace Expr {
 
         readonly side: Side;
 
-        private constructor(side: Side) {
+        constructor(side: Side) {
             this.side = side;
         }
 
