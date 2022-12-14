@@ -10,7 +10,7 @@ export type Expr = Mapping | Composition | Variable;
  */
 export class Mapping {
 
-    readonly internal: Map<Side, Expr>;
+    private readonly internal: Map<Side, Expr>;
 
     constructor(internal: Map<Side, Expr>) {
         this.internal = internal;
@@ -46,6 +46,10 @@ export class Composition {
     constructor(first: Expr, second: Expr) {
         this.first = first;
         this.second = second;
+    }
+
+    static of(first: Expr, second: Expr) {
+        return new Composition(first, second);
     }
 
 }

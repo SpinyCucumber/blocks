@@ -9,8 +9,10 @@ export const reduce = singleDispatch<Expr, Expr>([
     [Mapping, expr => expr],
     [Composition, (expr: Composition) => {
         const first = reduce(expr.first);
-        const second = reduce(expr.second);
-        // TODO Reduce
+        if (first instanceof Mapping) {
+            const second = reduce(expr.second);
+            return substitute(second)(first);
+        }
         return expr;
     }],
 ]);
