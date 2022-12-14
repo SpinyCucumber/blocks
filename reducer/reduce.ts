@@ -29,3 +29,7 @@ export const substitute: (expr: Expr) => (mapping: Mapping) => Expr = singleDisp
         return expr;
     })],
 ]);
+
+export function evaluate(expr: Expr, mapping: Mapping) {
+    return reduce(substitute(expr)(mapping));
+}
