@@ -27,6 +27,10 @@ export class Mapping {
         return new Mapping(Seq(this.internal).map(mapper));
     }
 
+    toString(): string {
+        return "{" + Seq(this.internal.entries()).map(([side, expr]) => `${side}: ${expr}`).toArray().join(", ") + "}";
+    }
+
 }
 
 /**
@@ -43,6 +47,10 @@ export class Composition {
         this.second = second;
     }
 
+    toString(): string {
+        return `Compose(${this.first}, ${this.second})`;
+    }
+
 }
 
 /**
@@ -56,6 +64,10 @@ export class Variable {
     constructor(side: Side, depth: number) {
         this.side = side;
         this.depth = depth;
+    }
+
+    toString(): string {
+        return `Variable(${this.side}, ${this.depth})`;
     }
 
 }
