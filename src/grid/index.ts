@@ -36,6 +36,12 @@ export function evalNeighbors(grid: Grid, position: Position): SideValues {
     }
 }
 
+export function merged(primary: SideValues, fallback: SideValues): SideValues {
+    return {
+        get: (side) => primary.get(side) ?? fallback.get(side)
+    }
+}
+
 export namespace Tile {
 
     /**
@@ -51,6 +57,11 @@ export namespace Tile {
 
     }
 
+    /**
+     * A mimic tile can be though of as a "proxy" tile.
+     * It reads a tile along its input side, then duplicates
+     * the behavior of said tile.
+     */
     export class Mimic extends Tile {
 
         private inputSide: Side;
@@ -62,16 +73,14 @@ export namespace Tile {
 
         eval(grid: Grid, position: Position): SideValues {
             const toMimic = evalNeighbors(grid, position).get(this.inputSide);
-            if (!(toMimic instanceof Tile)) {
-                // TODO More detailed error
-                throw new Error("Can only mimic tiles.");
-            }
+            // TODO More detailed error
+            if (!(toMimic instanceof Tile)) throw new Error("Can only mimic tiles.");
             return toMimic.eval(grid, position);
         }
 
     }
 
-    export class Constructor extends Tile {
+    export class Abstractor extends Tile {
 
         private outputSide: Side;
 
@@ -86,7 +95,11 @@ export namespace Tile {
                     // To evaluate the constructed tile, we create a "virtual grid"
                     // where the constructor tile is replaced with a constant tile,
                     // and we evaluate the neighboring tiles of the constant tile.
-                    const sub = new Constant(neighbors);
+                    // We create the constant tile by merging the output of the constructor tile
+                    // and the values of the constructed tile's neighbors.
+                    // This allows for recursion, as the constructed tile can be referenced
+                    // in the virtual grid.
+                    const sub = new Constant(merged(output, neighbors));
                     const subGrid: Grid = {
                         at(subPosition) {
                             if (subPosition.equals(position)) return sub;
@@ -96,7 +109,8 @@ export namespace Tile {
                     return evalNeighbors(subGrid, position);
                 }
             })();
-            return Map([[this.outputSide, constructed]]);
+            const output = Map([[this.outputSide, constructed]]);
+            return output;
         }
 
     }
@@ -129,6 +143,44 @@ export namespace Tile {
         
         apply(): SideValues {
             return this.values;
+        }
+
+    }
+
+    export class ConstantValue extends Constant {
+
+        constructor(value: Value) {
+            super({ get: () => value });
+        }
+
+    }
+
+    export class Merge extends Simple {
+
+        private primarySide: Side;
+        private fallbackSide: Side;
+        private outputSide: Side;
+
+        constructor(primarySide: Side, fallbackSide: Side, outputSide: Side) {
+            super();
+            this.primarySide = primarySide;
+            this.fallbackSide = fallbackSide;
+            this.outputSide = outputSide;
+        }
+
+        apply(neighbors: SideValues): SideValues {
+            const primary = neighbors.get(this.primarySide);
+            const fallback = neighbors.get(this.fallbackSide);
+            // TODO More detailed error.
+            if (!(primary instanceof Simple && fallback instanceof Simple)) {
+                throw new Error("Can only merge simple tiles.");
+            }
+            const constructed = new (class extends Simple {
+                apply(neighbors: SideValues): SideValues {
+                    return merged(primary.apply(neighbors), fallback.apply(neighbors));
+                }
+            })();
+            return Map([[this.outputSide, constructed]]);
         }
 
     }
