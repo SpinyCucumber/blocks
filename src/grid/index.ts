@@ -1,4 +1,5 @@
 import { Vector, Position, Mapping } from "../utility";
+import { Map } from "immutable";
 
 /**
  * A side is a vector.
@@ -37,7 +38,10 @@ export function evalNeighbors(grid: Grid, position: Position): SideValues {
 
 export namespace Tile {
 
-    export abstract class Simple implements Tile {
+    /**
+     * A simple tile can be expressed as a function of evalNeighbors
+     */
+    export abstract class Simple extends Tile {
 
         abstract apply(neighbors: SideValues): SideValues;
 
@@ -47,11 +51,12 @@ export namespace Tile {
 
     }
 
-    export class Mimic implements Tile {
+    export class Mimic extends Tile {
 
         private inputSide: Side;
 
-        Mimic(inputSide: Side) {
+        constructor(inputSide: Side) {
+            super();
             this.inputSide = inputSide;
         }
 
@@ -66,11 +71,42 @@ export namespace Tile {
 
     }
 
+    export class Constructor extends Tile {
+
+        private outputSide: Side;
+
+        constructor(outputSide: Side) {
+            super();
+            this.outputSide = outputSide;
+        }
+
+        eval(grid: Grid, position: Position): SideValues {
+            const constructed = new (class extends Simple {
+                apply(neighbors: SideValues): SideValues {
+                    // To evaluate the constructed tile, we create a "virtual grid"
+                    // where the constructor tile is replaced with a constant tile,
+                    // and we evaluate the neighboring tiles of the constant tile.
+                    const sub = new Constant(neighbors);
+                    const subGrid: Grid = {
+                        at(subPosition) {
+                            if (subPosition.equals(position)) return sub;
+                            return grid.at(subPosition);
+                        }
+                    };
+                    return evalNeighbors(subGrid, position);
+                }
+            })();
+            return Map([[this.outputSide, constructed]]);
+        }
+
+    }
+
     export class Pipe extends Simple {
 
         private connections: Mapping<Side, Side>;
 
-        Pipe(connections: Mapping<Side, Side>) {
+        constructor(connections: Mapping<Side, Side>) {
+            super();
             this.connections = connections;
         }
 
@@ -78,6 +114,21 @@ export namespace Tile {
             return {
                 get: (side) => neighbors.get(this.connections.get(side))
             }
+        }
+
+    }
+
+    export class Constant extends Simple {
+
+        private values: SideValues;
+
+        constructor(values: SideValues) {
+            super();
+            this.values = values;
+        }
+        
+        apply(): SideValues {
+            return this.values;
         }
 
     }
