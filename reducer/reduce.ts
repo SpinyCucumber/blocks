@@ -11,6 +11,7 @@ export const reduce = singleDispatch<Expr, Expr>([
         const first = reduce(expr.first);
         const second = reduce(expr.second);
         if (first instanceof Mapping && second instanceof Mapping) {
+            console.log(`Composing ${first} with ${second}`);
             return second.map(value => evaluate(value, first));
         }
         return expr;
@@ -22,7 +23,10 @@ export const substitute = singleDispatch<Expr, (mapping: Mapping, depth: number)
     [Variable, (expr: Variable) => ((mapping, depth) => {
         if (expr.depth === depth) {
             const { side } = expr;
-            if (mapping.has(side)) return mapping.get(side);
+            if (mapping.has(side)) {
+                console.log(`Substituting ${expr} with ${mapping.get(side)}`);
+                return mapping.get(side);
+            }
         }
         return expr;
     })],
