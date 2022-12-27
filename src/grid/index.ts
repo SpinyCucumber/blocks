@@ -80,7 +80,7 @@ export namespace Tile {
 
     }
 
-    export class Abstractor extends Tile {
+    export class Abstraction extends Tile {
 
         private outputSide: Side;
 
