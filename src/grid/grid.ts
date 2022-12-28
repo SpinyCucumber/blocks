@@ -2,8 +2,8 @@ import { Position, Vector, BlockingQueue } from "../utility";
 import { Map, Seq } from "immutable";
 import Deque from "double-ended-queue";
 
-type Value = any;
-type Side = Vector;
+export type Value = any;
+export type Side = Vector;
 
 /**
  * A tile is defined by a "program", which is executed once.
