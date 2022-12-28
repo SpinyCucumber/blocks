@@ -26,12 +26,22 @@ export interface CellOptions {
 
 class Cell {
 
-    pushed = new Deque<Value>();
+    private pushed = new Deque<Value>();
     queue = new BlockingQueue<Value>();
     tile: Tile;
 
     constructor({ tile }: CellOptions) {
         this.tile = tile;
+    }
+
+    push(value: Value): void {
+        this.pushed.enqueue(value);
+    }
+
+    step(): void {
+        while (!this.pushed.isEmpty()) {
+            this.queue.enqueue(this.pushed.dequeue());
+        }
     }
 
 }
@@ -57,7 +67,7 @@ export class Grid {
             // push pushes a value to the pushed buffer of a neighboring cell
             const push = (side: Side, value: Value) => {
                 const neighbor = this.cells.get(position.add(side));
-                if (neighbor) neighbor.pushed.enqueue(value);
+                if (neighbor) neighbor.push(value);
             };
             // Start cell process
             cell.tile.process({ pull, push });
@@ -66,11 +76,7 @@ export class Grid {
 
     step(): void {
         // For each cell, move pushed values into internal queue
-        for (const { pushed, queue } of this.cells.values()) {
-            while (!pushed.isEmpty()) {
-                queue.enqueue(pushed.dequeue());
-            }
-        }
+        for (const cell of this.cells.values()) cell.step();
     }
 
 }
