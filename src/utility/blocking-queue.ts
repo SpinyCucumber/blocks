@@ -1,23 +1,27 @@
+import Deque from "double-ended-queue";
+
+type Resolver<T> = (t: T) => void;
+
 export class BlockingQueue<T> {
 
-    private promises: Promise<T>[] = [];
-    private resolvers: ((t: T) => void)[] = [];
+    private promises = new Deque<Promise<T>>();
+    private resolvers = new Deque<Resolver<T>>();
 
     private add() {
-      this.promises.push(new Promise(resolve => {
-        this.resolvers.push(resolve);
+      this.promises.enqueue(new Promise(resolve => {
+        this.resolvers.enqueue(resolve);
       }));
     }
 
     enqueue(t: T) {
       if (this.resolvers.length === 0) this.add();
-      const resolve = this.resolvers.shift();
+      const resolve = this.resolvers.dequeue();
       resolve(t);
     }
 
     dequeue(): Promise<T> {
       if (this.promises.length === 0) this.add();
-      return this.promises.shift();
+      return this.promises.dequeue();
     }
 
     isEmpty() {

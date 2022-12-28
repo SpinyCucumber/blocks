@@ -1,5 +1,5 @@
 import { test, expect } from "@jest/globals";
-import { BlockingQueue } from "./queue";
+import { BlockingQueue } from "./blocking-queue";
 
 test("should operate as queue", async () => {
     const queue = new BlockingQueue<number>();
@@ -18,7 +18,7 @@ test("should support async operation", async () => {
         queue.enqueue(3);
         queue.enqueue(4);
     }
-    
+
     async function dequeueValues() {
         expect(await queue.dequeue()).toBe(3);
         expect(await queue.dequeue()).toBe(4);
