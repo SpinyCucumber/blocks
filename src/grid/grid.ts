@@ -51,6 +51,18 @@ class Cell {
 
 }
 
+export interface PushEvent {
+    position: Position;
+    side: Side;
+    value: Value;
+}
+
+export interface PullEvent {
+    position: Position;
+    side: Side;
+    value: Value;
+}
+
 export interface GridOptions {
     cells: Iterable<[Position, CellOptions]>;
 }
@@ -59,7 +71,11 @@ export class Grid {
 
     // We use immutable.js to create a mapping between 2D coordinates and cells
     private cells: Map<Position, Cell>;
+
+    // Used to synchronize cells
     readonly step = new Subject<void>();
+    readonly push = new Subject<PushEvent>();
+    readonly pull = new Subject<PullEvent>();
 
     constructor({ cells }: GridOptions) {
         this.cells = Map(Seq(cells).map(([position, options]) => ([position, new Cell(options)])));
@@ -69,9 +85,14 @@ export class Grid {
         for (const [position, cell] of this.cells.entries()) {
             // Construct the environment for the process
             // pull dequeues a value from one of the cell's internal queue
-            const pull = cell.read;
+            const pull = async (side: Side) => {
+                const value = await cell.read(side);
+                this.pull.next({ position, side, value });
+                return value;
+            }
             // push writes a value to a neighboring cell
             const push = (side: Side, value: Value) => {
+                this.push.next({ position, side, value });
                 const neighbor = this.cells.get(position.add(side));
                 if (neighbor) neighbor.write(side.scale(-1), value);
             };
