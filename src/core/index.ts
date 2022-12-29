@@ -72,6 +72,8 @@ export interface Pull {
     value: Value;
 }
 
+export class CoreError extends Error {}
+
 export interface GridOptions {
     cells: Iterable<[Position, CellOptions]>;
 }
@@ -91,25 +93,38 @@ export class Grid {
         this.cells = Map(Seq(cells).map(([position, options]) => ([position, new Cell(options)])));
     }
 
+    getCell(position: Position): Cell {
+        // TODO Lazy cell creation would greatly simplify things
+        return this.cells.get(position)!;
+    }
+
+    /**
+     * Creates the context for a process executing at @param position
+     * Processes can read values from neighboring cells, push values, etc.
+     */
+    createProcessContext(position: Position): ProcessContext {
+        // pull dequeues a value from one of the cell's internal queue
+        const pull = async (side: Side) => {
+            const value = await this.getCell(position).read(side);
+            this.pull.next({ position, side, value });
+            return value;
+        }
+        // push writes a value to a neighboring cell
+        const push = (side: Side, value: Value) => {
+            this.push.next({ position, side, value });
+            const neighbor = this.getCell(position.add(side));
+            neighbor.write(side.scale(-1), value);
+        };
+        // synchronize is resolved during the grid's next step
+        const synchronize = () => firstValueFrom(this.step);
+        return { push, pull, synchronize };
+    }
+
     start(): void {
         for (const [position, cell] of this.cells.entries()) {
-            // Construct the environment for the process
-            // pull dequeues a value from one of the cell's internal queue
-            const pull = async (side: Side) => {
-                const value = await cell.read(side);
-                this.pull.next({ position, side, value });
-                return value;
-            }
-            // push writes a value to a neighboring cell
-            const push = (side: Side, value: Value) => {
-                this.push.next({ position, side, value });
-                const neighbor = this.cells.get(position.add(side));
-                if (neighbor) neighbor.write(side.scale(-1), value);
-            };
-            // synchronize is resolved during the grid's next step
-            const synchronize = () => firstValueFrom(this.step);
             // Start cell process
-            cell.tile.process({ pull, push, synchronize });
+            // TODO Should separate cells and tiles
+            cell.tile.process(this.createProcessContext(position));
         }
     }
 
