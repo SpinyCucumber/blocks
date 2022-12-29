@@ -15,13 +15,13 @@ export class BlockingQueue<T> {
 
     enqueue(t: T) {
       if (this.resolvers.length === 0) this.add();
-      const resolve = this.resolvers.dequeue();
+      const resolve = this.resolvers.dequeue() as Resolver<T>;
       resolve(t);
     }
 
     dequeue(): Promise<T> {
       if (this.promises.length === 0) this.add();
-      return this.promises.dequeue();
+      return this.promises.dequeue() as Promise<T>;
     }
 
     isEmpty() {
