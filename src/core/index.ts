@@ -20,10 +20,10 @@ export const sides = Set(directions);
  * a neighboring cell.
  */
 export abstract class Tile {
-    abstract process(environment: Environment): void
+    abstract process(context: ProcessContext): void
 }
 
-export interface Environment {
+export interface ProcessContext {
     pull: (side: Side) => Promise<Value>
     push: (side: Side, value: Value) => void
     synchronize: () => Promise<void>

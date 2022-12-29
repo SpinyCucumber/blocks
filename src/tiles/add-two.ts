@@ -1,4 +1,4 @@
-import { Environment, Side, Tile } from "../core";
+import { ProcessContext, Side, Tile } from "../core";
 
 export default class AddTwo extends Tile {
 
@@ -9,7 +9,7 @@ export default class AddTwo extends Tile {
         super();
     }
     
-    async process({ pull, push, synchronize }: Environment) {
+    async process({ pull, push, synchronize }: ProcessContext) {
         while (true) {
             const a = await pull(this.inputA);
             const b = await pull(this.inputB);

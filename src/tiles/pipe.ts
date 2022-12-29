@@ -1,4 +1,4 @@
-import { Environment, Side, Tile } from "../core";
+import { ProcessContext, Side, Tile } from "../core";
 import { Map } from "immutable";
 
 export default class Pipe extends Tile {
@@ -10,7 +10,7 @@ export default class Pipe extends Tile {
         this.connections = Map(connections);
     }
     
-    async process({ pull, push, synchronize }: Environment) {
+    async process({ pull, push, synchronize }: ProcessContext) {
         const promises = this.connections.entrySeq().map(([input, output]) =>
             (async () => {
                 while (true) {
