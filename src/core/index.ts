@@ -13,7 +13,8 @@ export type Side = Vector;
 export const sides = Set(directions);
 
 /**
- * A tile is defined by a "program", which is executed once.
+ * A tile is defined by a "process", which is executed concurrently for each cell
+ * at the start of the computation.
  * The environment is the set of actions available to the program,
  * which includes waiting on a value (pulling) or pushing a value to
  * a neighboring cell.
@@ -32,6 +33,10 @@ export interface CellOptions {
     tile: Tile;
 }
 
+/**
+ * A cell contains a data queue for each side, which can be written to and read from.
+ * The behavior of a cell is defined by a tile.
+ */
 class Cell {
 
     queues = Map(Seq(sides).map(side => ([side, new BlockingQueue<Value>()])));
@@ -41,23 +46,27 @@ class Cell {
         this.tile = tile;
     }
 
+    private getQueue(side: Side) {
+        return this.queues.get(side) as BlockingQueue<Value>;
+    }
+
     write(side: Side, value: Value): void {
-        this.queues.get(side)?.enqueue(value);
+        this.getQueue(side).enqueue(value);
     }
 
     read(side: Side): Promise<Value> {
-        return this.queues.get(side)?.dequeue();
+        return this.getQueue(side).dequeue();
     }
 
 }
 
-export interface PushEvent {
+export interface Push {
     position: Position;
     side: Side;
     value: Value;
 }
 
-export interface PullEvent {
+export interface Pull {
     position: Position;
     side: Side;
     value: Value;
@@ -74,8 +83,9 @@ export class Grid {
 
     // Used to synchronize cells
     readonly step = new Subject<void>();
-    readonly push = new Subject<PushEvent>();
-    readonly pull = new Subject<PullEvent>();
+    // Push/pull events
+    readonly push = new Subject<Push>();
+    readonly pull = new Subject<Pull>();
 
     constructor({ cells }: GridOptions) {
         this.cells = Map(Seq(cells).map(([position, options]) => ([position, new Cell(options)])));
