@@ -11,16 +11,16 @@ export class Pipe extends Tile {
     }
     
     async process({ pull, push, synchronize }: Environment) {
-        const processes = this.connections.entrySeq().map(([input, output]) =>
-            async () => {
+        const promises = this.connections.entrySeq().map(([input, output]) =>
+            (async () => {
                 while (true) {
                     const value = await pull(input);
                     await synchronize();
                     push(output, value);
                 }
-            }
-        );
-        await Promise.all(processes);
+            })()
+        ).toArray();
+        await Promise.all(promises);
     }
 
 }
