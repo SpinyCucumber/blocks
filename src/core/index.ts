@@ -46,16 +46,12 @@ class Cell {
         this.tile = tile;
     }
 
-    private getQueue(side: Side) {
-        return this.queues.get(side) as BlockingQueue<Value>;
-    }
-
     write(side: Side, value: Value): void {
-        this.getQueue(side).enqueue(value);
+        this.queues.get(side)!.enqueue(value);
     }
 
     read(side: Side): Promise<Value> {
-        return this.getQueue(side).dequeue();
+        return this.queues.get(side)!.dequeue();
     }
 
 }
