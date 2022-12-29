@@ -1,9 +1,15 @@
-import { Position, Vector, BlockingQueue } from "../utility";
-import { Map, Seq } from "immutable";
-import Deque from "double-ended-queue";
+import { Position, Vector, BlockingQueue, directions } from "../utility";
+import { Map, Set, Seq } from "immutable";
 
 export type Value = any;
+
+/**
+ * A side is a vector.
+ * The set of sides is closed under multiplication by -1;
+ * i.e., every side has an opposite.
+ */
 export type Side = Vector;
+export const sides = Set(directions);
 
 /**
  * A tile is defined by a "program", which is executed once.
@@ -16,7 +22,7 @@ export abstract class Tile {
 }
 
 export interface Environment {
-    pull: () => Promise<Value>
+    pull: (side: Side) => Promise<Value>
     push: (side: Side, value: Value) => void
 }
 
@@ -26,22 +32,19 @@ export interface CellOptions {
 
 class Cell {
 
-    private pushed = new Deque<Value>();
-    queue = new BlockingQueue<Value>();
+    queues = Map(Seq(sides).map(side => ([side, new BlockingQueue<Value>()])));
     tile: Tile;
 
     constructor({ tile }: CellOptions) {
         this.tile = tile;
     }
 
-    push(value: Value): void {
-        this.pushed.enqueue(value);
+    write(side: Side, value: Value): void {
+        this.queues.get(side)?.enqueue(value);
     }
 
-    step(): void {
-        while (!this.pushed.isEmpty()) {
-            this.queue.enqueue(this.pushed.dequeue());
-        }
+    read(side: Side): Promise<Value> {
+        return this.queues.get(side)?.dequeue();
     }
 
 }
@@ -62,21 +65,16 @@ export class Grid {
     start(): void {
         for (const [position, cell] of this.cells.entries()) {
             // Construct the environment for the process
-            // pull dequeues a value from the cell's internal queue
-            const pull = cell.queue.dequeue;
-            // push pushes a value to the pushed buffer of a neighboring cell
+            // pull dequeues a value from one of the cell's internal queue
+            const pull = cell.read;
+            // push writes a value to a neighboring cell
             const push = (side: Side, value: Value) => {
                 const neighbor = this.cells.get(position.add(side));
-                if (neighbor) neighbor.push(value);
+                if (neighbor) neighbor.write(side.scale(-1), value);
             };
             // Start cell process
             cell.tile.process({ pull, push });
         }
-    }
-
-    step(): void {
-        // For each cell, move pushed values into internal queue
-        for (const cell of this.cells.values()) cell.step();
     }
 
 }
