@@ -10,12 +10,12 @@ export class Pipe extends Tile {
         this.connections = Map(connections);
     }
     
-    async process({ pull, push }: Environment) {
+    async process({ pull, push, synchronize }: Environment) {
         const processes = this.connections.entrySeq().map(([input, output]) =>
             async () => {
                 while (true) {
                     const value = await pull(input);
-                    // TODO Synchronize
+                    await synchronize();
                     push(output, value);
                 }
             }
@@ -34,11 +34,11 @@ export class AddTwo extends Tile {
         super();
     }
     
-    async process({ pull, push }: Environment) {
+    async process({ pull, push, synchronize }: Environment) {
         while (true) {
             const a = await pull(this.inputA);
             const b = await pull(this.inputB);
-            // TODO Synchronize
+            await synchronize();
             push(this.output, a + b);
         }
     }

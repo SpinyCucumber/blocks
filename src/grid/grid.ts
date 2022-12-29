@@ -1,5 +1,6 @@
 import { Position, Vector, BlockingQueue, directions } from "../utility";
 import { Map, Set, Seq } from "immutable";
+import { Subject, firstValueFrom } from "rxjs";
 
 export type Value = any;
 
@@ -24,6 +25,7 @@ export abstract class Tile {
 export interface Environment {
     pull: (side: Side) => Promise<Value>
     push: (side: Side, value: Value) => void
+    synchronize: () => Promise<void>
 }
 
 export interface CellOptions {
@@ -57,6 +59,7 @@ export class Grid {
 
     // We use immutable.js to create a mapping between 2D coordinates and cells
     private cells: Map<Position, Cell>;
+    readonly step = new Subject<void>();
 
     constructor({ cells }: GridOptions) {
         this.cells = Map(Seq(cells).map(([position, options]) => ([position, new Cell(options)])));
@@ -72,8 +75,10 @@ export class Grid {
                 const neighbor = this.cells.get(position.add(side));
                 if (neighbor) neighbor.write(side.scale(-1), value);
             };
+            // synchronize is resolved during the grid's next step
+            const synchronize = () => firstValueFrom(this.step);
             // Start cell process
-            cell.tile.process({ pull, push });
+            cell.tile.process({ pull, push, synchronize });
         }
     }
 
