@@ -4,18 +4,16 @@ import { pair, Position } from "../utility/vector";
 import { opposite, Side, numSides, toDirection } from "./side";
 
 export type Value = any;
-export type Process<T> = (context: ProcessContext) => Promise<T>
 export { Side };
+
+export interface Processable<T> {
+    process(context: ProcessContext): Promise<T>;
+}
 
 export interface ProcessContext {
     pull: (side: Side) => Promise<Value>
     push: (side: Side, value: Value) => Promise<void>
     synchronize: () => Promise<void>
-}
-
-// Should perhaps move this?
-export abstract class Tile {
-    abstract process(context: ProcessContext): Promise<void>;
 }
 
 export class Cell {
@@ -46,11 +44,7 @@ export class Engine {
         return this.cells.get(pairing)!;
     }
 
-    /**
-     * Constructs the process context for @param position and starts @param process
-     * Processes can read values from neighboring cells, push values, etc.
-     */
-    run<T>(position: Position, process: Process<T>): Promise<T> {
+    run<T>(processable: Processable<T>, position: Position): Promise<T> {
         // pull dequeues a value from one of the cell's internal buffer
         const pull = async (side: Side) => {
             const value = await this.getCell(position).getChannel(side).receive();
@@ -63,7 +57,7 @@ export class Engine {
         };
         // synchronize is resolved during the grid's next step
         const synchronize = () => firstValueFrom(this.step);
-        return process({ push, pull, synchronize });
+        return processable.process({ push, pull, synchronize });
     }
 
 }

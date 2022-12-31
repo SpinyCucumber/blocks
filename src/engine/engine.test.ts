@@ -15,18 +15,22 @@ test("should send values", async () => {
 
     const engine = new Engine();
     
-    async function producer({ push }: ProcessContext) {
-        await push(Side.Right, 7);
-    }
+    const producer = {
+        async process({ push }: ProcessContext) {
+            await push(Side.Right, 7);
+        }
+    };
 
-    async function consumer({ pull }: ProcessContext) {
-        const value = await pull(Side.Left);
-        expect(value).toBe(7);
-    }
+    const consumer = {
+        async process({ pull }: ProcessContext) {
+            const value = await pull(Side.Left);
+            expect(value).toBe(7);
+        }
+    };
 
     await Promise.all([
-        engine.run(new Position(0, 0), producer),
-        engine.run(new Position(1, 0), consumer),
+        engine.run(producer, new Position(0, 0)),
+        engine.run(consumer, new Position(1, 0)),
     ]);
 
 });
@@ -35,17 +39,19 @@ test("should await synchronize", async () => {
 
     const engine = new Engine();
 
-    let counter = 0;
-    async function process({ synchronize }: ProcessContext) {
-        while (true) {
-            await synchronize();
-            counter += 1;
+    const counter = {
+        value: 0,
+        async process({ synchronize }: ProcessContext) {
+            while (true) {
+                await synchronize();
+                this.value += 1;
+            }
         }
     }
 
-    engine.run(new Position(0, 0), process);
+    engine.run(counter, new Position(0, 0));
     for (let i = 0; i < 20; i++) {
-        expect(counter).toBe(i);
+        expect(counter.value).toBe(i);
         await engine.step.next();
     }
 
