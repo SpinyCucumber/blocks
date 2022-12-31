@@ -30,3 +30,24 @@ test("should send values", async () => {
     ]);
 
 });
+
+test("should await synchronize", async () => {
+
+    const engine = new Engine();
+
+    async function process({ synchronize }: ProcessContext) {
+        await synchronize();
+    }
+
+    async function clock() {
+        engine.step();
+    }
+
+    const promise = Promise.all([
+        engine.run(new Position(0, 0), process),
+        clock(),
+    ]);
+
+    expect(promise).resolves.not.toThrow;
+
+});
