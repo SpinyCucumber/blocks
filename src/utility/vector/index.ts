@@ -52,11 +52,19 @@ export function pair({ x, y }: Pair): number {
     return (xx >= yy) ? (xx * xx + xx + yy) : (yy * yy + xx);
 }
 
-function *enumerateDirections(): Generator<Vector> {
+export function *enumerateDirections(): Generator<Vector> {
     let direction = new Vector(1,0);
     for (let i = 0; i < 4; i++) {
         yield direction;
         direction = direction.rotate();
+    }
+}
+
+export function *enumerateGrid(min: Position, max: Position): Generator<Position> {
+    for (let y = min.y; y < max.y; y++) {
+        for (let x = min.x; x < max.x; x++) {
+            yield new Position(x, y);
+        }
     }
 }
 
