@@ -1,4 +1,4 @@
-import { directions } from "../utility";
+import { directions } from "../utility/vector";
 import { Set } from "immutable";
 
 /**

@@ -1,4 +1,5 @@
-import { Channel, Position } from "../utility";
+import { Channel } from "../utility";
+import { Position } from "../utility/vector";
 import { opposite, Side, sides, toDirection } from "./side";
 
 export type Value = any;
