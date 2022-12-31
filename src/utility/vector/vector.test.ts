@@ -1,5 +1,5 @@
 import { test, expect } from "@jest/globals";
-import { directions, enumerateGrid, Position, Vector } from ".";
+import { directions, enumerateGrid, pair, Position, Vector } from ".";
 import { List } from "immutable";
 
 test("should enumerate directions", () => {
@@ -32,6 +32,19 @@ test("should scale vectors", () => {
     expect(new Vector(0,10).scale(-1)).toEqual(new Vector(-0,-10));
 });
 
+test("should add vectors to positions", () => {
+    expect(new Position(1,1).add(new Vector(3,5))).toEqual(new Position(4,6));
+    expect(new Position(0,0).add(new Vector(-10,0))).toEqual(new Position(-10,0));
+});
+
 test("should pair uniquely", () => {
-    // TODO
+    // Obviously, we can't check that every pair maps to a unique integer,
+    // but this should give us a good idea
+    const pairings = new Set<number>();
+    const positions = enumerateGrid(new Position(-10, -10), new Position(11, 11));
+    for (const position of positions) {
+        const pairing = pair(position);
+        expect(pairings.has(pairing)).toBeFalsy();
+        pairings.add(pairing);
+    }
 });
