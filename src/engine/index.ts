@@ -1,12 +1,12 @@
 import { Channel } from "../utility";
 import { pair, Position } from "../utility/vector";
-import { opposite, Side, sides, toDirection } from "./side";
+import { opposite, Side, numSides, toDirection } from "./side";
 
 export type Value = any;
 
 export class Cell {
 
-    private channels = new Array<Channel<Value>>(sides.size);
+    private channels = new Array<Channel<Value>>(numSides);
 
     getChannel(side: Side) {
         if (this.channels[side] === undefined) return (this.channels[side] = new Channel());
