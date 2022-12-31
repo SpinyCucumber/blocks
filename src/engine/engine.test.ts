@@ -35,19 +35,18 @@ test("should await synchronize", async () => {
 
     const engine = new Engine();
 
+    let counter = 0;
     async function process({ synchronize }: ProcessContext) {
-        await synchronize();
+        while (true) {
+            await synchronize();
+            counter += 1;
+        }
     }
 
-    async function clock() {
-        engine.step.next();
+    engine.run(new Position(0, 0), process);
+    for (let i = 0; i < 20; i++) {
+        expect(counter).toBe(i);
+        await engine.step.next();
     }
-
-    const promise = Promise.all([
-        engine.run(new Position(0, 0), process),
-        clock(),
-    ]);
-
-    expect(promise).resolves.not.toThrow;
 
 });
