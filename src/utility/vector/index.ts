@@ -41,6 +41,17 @@ export class Vector extends Pair {
 
 }
 
+/**
+ * A pairing function which maps each integer pair (including negative integers) to a unique integer.
+ * Credit to https://codepen.io/sachmata/post/elegant-pairing, and
+ * https://gist.github.com/TheGreatRambler/048f4b38ca561e6566e0e0f6e71b7739
+ */
+export function pair({ x, y }: Pair): number {
+    const xx = (x >= 0) ? (2 * x) : (-2 * x - 1);
+    const yy = (y >= 0) ? (2 * y) : (-2 * y - 1);
+    return (xx >= yy) ? (xx * xx + xx + yy) : (yy * yy + xx);
+}
+
 function *enumerateDirections(): Generator<Vector> {
     let direction = new Vector(1,0);
     for (let i = 0; i < 4; i++) {
