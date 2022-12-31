@@ -1,3 +1,5 @@
+import { Subject } from "rxjs";
+import { firstValueFrom } from "rxjs/internal/firstValueFrom";
 import { Channel } from "../utility";
 import { pair, Position } from "../utility/vector";
 import { opposite, Side, numSides, toDirection } from "./side";
@@ -15,7 +17,7 @@ export class Cell {
 
 }
 
-export type Process = (context: ProcessContext) => Promise<void>
+export type Process<T> = (context: ProcessContext) => Promise<T>
 
 export interface ProcessContext {
     pull: (side: Side) => Promise<Value>
@@ -23,9 +25,10 @@ export interface ProcessContext {
     synchronize: () => Promise<void>
 }
 
-export class Engine extends EventTarget {
+export class Engine {
 
     private cells = new Map<number, Cell>();
+    readonly step = new Subject<void>();
 
     getCell(position: Position): Cell {
         // We use a pairing function (which maps each integer pair to a unique integer)
@@ -43,7 +46,7 @@ export class Engine extends EventTarget {
      * Constructs the process context for @param position and starts @param process
      * Processes can read values from neighboring cells, push values, etc.
      */
-    async run(position: Position, process: Process): Promise<void> {
+    run<T>(position: Position, process: Process<T>): Promise<T> {
         // pull dequeues a value from one of the cell's internal buffer
         const pull = async (side: Side) => {
             const value = await this.getCell(position).getChannel(side).receive();
@@ -55,14 +58,8 @@ export class Engine extends EventTarget {
             await neighbor.getChannel(opposite(side)).send(value);
         };
         // synchronize is resolved during the grid's next step
-        const synchronize = () => new Promise<void>(resolve => {
-            this.addEventListener("step", (evt) => resolve(), { once: true });
-        });
-        await process({ push, pull, synchronize });
-    }
-
-    step() {
-        this.dispatchEvent(new Event("step"));
+        const synchronize = () => firstValueFrom(this.step);
+        return process({ push, pull, synchronize });
     }
 
 }

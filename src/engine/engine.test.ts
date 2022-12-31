@@ -40,7 +40,7 @@ test("should await synchronize", async () => {
     }
 
     async function clock() {
-        engine.step();
+        engine.step.next();
     }
 
     const promise = Promise.all([
