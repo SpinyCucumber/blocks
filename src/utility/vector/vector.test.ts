@@ -4,9 +4,9 @@ import { List } from "immutable";
 
 test("should enumerate directions", () => {
     expect(directions).toEqual(List([
-        new Vector({ x: 1, y: 0 }),
-        new Vector({ x: 0, y: 1 }),
-        new Vector({ x: -1, y: 0 }),
-        new Vector({ x: 0, y: -1 }),
+        new Vector(1,0),
+        new Vector(0,1),
+        new Vector(-1,0),
+        new Vector(0,-1),
     ]));
 });
