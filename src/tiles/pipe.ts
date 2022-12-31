@@ -1,13 +1,10 @@
-import { ProcessContext, Side, Tile } from "../core";
+import { ProcessContext, Side, Tile } from "../engine";
 import { Map } from "immutable";
 
 export default class Pipe extends Tile {
-
-    private connections: Map<Side, Side>;
     
-    constructor(connections: Iterable<[Side, Side]>) {
+    constructor(private readonly connections: Map<Side, Side>) {
         super();
-        this.connections = Map(connections);
     }
     
     async process({ pull, push, synchronize }: ProcessContext) {
@@ -16,7 +13,7 @@ export default class Pipe extends Tile {
                 while (true) {
                     const value = await pull(input);
                     await synchronize();
-                    push(output, value);
+                    await push(output, value);
                 }
             })()
         ).toArray();

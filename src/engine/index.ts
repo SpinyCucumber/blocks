@@ -1,10 +1,22 @@
-import { Subject } from "rxjs";
-import { firstValueFrom } from "rxjs/internal/firstValueFrom";
+import { Subject, firstValueFrom } from "rxjs";
 import { Channel } from "../utility";
 import { pair, Position } from "../utility/vector";
 import { opposite, Side, numSides, toDirection } from "./side";
 
 export type Value = any;
+export type Process<T> = (context: ProcessContext) => Promise<T>
+export { Side };
+
+export interface ProcessContext {
+    pull: (side: Side) => Promise<Value>
+    push: (side: Side, value: Value) => Promise<void>
+    synchronize: () => Promise<void>
+}
+
+// Should perhaps move this?
+export abstract class Tile {
+    abstract process(context: ProcessContext): Promise<void>;
+}
 
 export class Cell {
 
@@ -15,14 +27,6 @@ export class Cell {
         return this.channels[side];
     }
 
-}
-
-export type Process<T> = (context: ProcessContext) => Promise<T>
-
-export interface ProcessContext {
-    pull: (side: Side) => Promise<Value>
-    push: (side: Side, value: Value) => Promise<void>
-    synchronize: () => Promise<void>
 }
 
 export class Engine {
