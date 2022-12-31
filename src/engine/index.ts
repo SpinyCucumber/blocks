@@ -1,5 +1,5 @@
 import { Channel } from "../utility";
-import { Position } from "../utility/vector";
+import { pair, Position } from "../utility/vector";
 import { opposite, Side, sides, toDirection } from "./side";
 
 export type Value = any;
@@ -9,7 +9,7 @@ export class Cell {
     private channels = new Array<Channel<Value>>(sides.size);
 
     getChannel(side: Side) {
-        if (this.channels[side] === undefined) this.channels[side] = new Channel();
+        if (this.channels[side] === undefined) return (this.channels[side] = new Channel());
         return this.channels[side];
     }
 
@@ -28,7 +28,15 @@ export class Engine extends EventTarget {
     private cells = new Map<number, Cell>();
 
     getCell(position: Position): Cell {
-        // TODO
+        // We use a pairing function (which maps each integer pair to a unique integer)
+        // to convert positions into number keys. This allows us to use vanilla JS Maps.
+        const pairing = pair(position);
+        if (!this.cells.has(pairing)) {
+            const cell = new Cell();
+            this.cells.set(pairing, cell);
+            return cell;
+        }
+        return this.cells.get(pairing)!;
     }
 
     /**
