@@ -1,23 +1,12 @@
-import { Position, Vector, directions } from "../utility";
-import { Set } from "immutable";
+import { Position } from "../utility";
+import { opposite, Side, toDirection } from "./side";
 
 export type Value = any;
-
-/**
- * A side is a vector.
- * The set of sides is closed under multiplication by -1;
- * i.e., every side has an opposite.
- */
-export type Side = Vector;
-export const sides = Set(directions);
 
 export interface Grid {
     at(position: Position): Cell;
 }
 
-/**
- * 
- */
 export interface Cell {
     put(side: Side, value: Value): Promise<void>;
     get(side: Side): Promise<Value>;
@@ -49,8 +38,8 @@ export class Engine extends EventTarget {
         }
         // push writes a value to a neighboring cell
         const push = async (side: Side, value: Value) => {
-            const neighbor = this.grid.at(position.add(side));
-            await neighbor.put(side.scale(-1), value);
+            const neighbor = this.grid.at(position.add(toDirection(side)));
+            await neighbor.put(opposite(side), value);
         };
         // synchronize is resolved during the grid's next step
         const synchronize = () => new Promise<void>(resolve => {
