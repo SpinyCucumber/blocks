@@ -1,5 +1,5 @@
 import { test, expect } from "@jest/globals";
-import { directions, Vector } from "./vector";
+import { directions, Vector } from ".";
 import { List } from "immutable";
 
 test("should enumerate directions", () => {
